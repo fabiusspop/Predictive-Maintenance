@@ -1,0 +1,133 @@
+{% extends 'maintenance/base.html' %}
+
+{% block title %}Maintenance Alerts - IoT Maintenance{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Maintenance Alerts</h1>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-danger text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Critical</h5>
+                    <p class="card-text display-4">{{ critical_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">High</h5>
+                    <p class="card-text display-4">{{ high_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Medium</h5>
+                    <p class="card-text display-4">{{ medium_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Low</h5>
+                    <p class="card-text display-4">{{ low_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if alerts %}
+    <ul class="nav nav-tabs mb-3" id="alertTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="active-tab" data-bs-toggle="tab" data-bs-target="#active" type="button" role="tab">Active</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="resolved-tab" data-bs-toggle="tab" data-bs-target="#resolved" type="button" role="tab">Resolved</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab">All</button>
+        </li>
+    </ul>
+    
+    <div class="tab-content" id="alertTabsContent">
+        <div class="tab-pane fade show active" id="active" role="tabpanel">
+            <div class="list-group">
+                {% for alert in alerts %}
+                {% if not alert.is_resolved %}
+                <a href="{% url 'maintenance:alert_detail' alert.pk %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ alert.sensor.name }}</h5>
+                        <small>{{ alert.timestamp|date:"M d, H:i" }}</small>
+                    </div>
+                    <p class="mb-1">{{ alert.message }}</p>
+                    <div>
+                        <span class="badge bg-{% if alert.priority == 'critical' %}danger{% elif alert.priority == 'high' %}warning{% elif alert.priority == 'medium' %}info{% else %}secondary{% endif %}">
+                            {{ alert.priority }}
+                        </span>
+                    </div>
+                </a>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="tab-pane fade" id="resolved" role="tabpanel">
+            <div class="list-group">
+                {% for alert in alerts %}
+                {% if alert.is_resolved %}
+                <a href="{% url 'maintenance:alert_detail' alert.pk %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ alert.sensor.name }}</h5>
+                        <small>{{ alert.timestamp|date:"M d, H:i" }}</small>
+                    </div>
+                    <p class="mb-1">{{ alert.message }}</p>
+                    <div>
+                        <span class="badge bg-{% if alert.priority == 'critical' %}danger{% elif alert.priority == 'high' %}warning{% elif alert.priority == 'medium' %}info{% else %}secondary{% endif %}">
+                            {{ alert.priority }}
+                        </span>
+                        <span class="badge bg-success">Resolved</span>
+                        <small class="text-muted">{{ alert.resolved_at|date:"M d, H:i" }}</small>
+                    </div>
+                </a>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="tab-pane fade" id="all" role="tabpanel">
+            <div class="list-group">
+                {% for alert in alerts %}
+                <a href="{% url 'maintenance:alert_detail' alert.pk %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ alert.sensor.name }}</h5>
+                        <small>{{ alert.timestamp|date:"M d, H:i" }}</small>
+                    </div>
+                    <p class="mb-1">{{ alert.message }}</p>
+                    <div>
+                        <span class="badge bg-{% if alert.priority == 'critical' %}danger{% elif alert.priority == 'high' %}warning{% elif alert.priority == 'medium' %}info{% else %}secondary{% endif %}">
+                            {{ alert.priority }}
+                        </span>
+                        {% if alert.is_resolved %}
+                        <span class="badge bg-success">Resolved</span>
+                        <small class="text-muted">{{ alert.resolved_at|date:"M d, H:i" }}</small>
+                        {% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <p>No maintenance alerts have been generated.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 
