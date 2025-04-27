@@ -4,20 +4,11 @@ This project implements a complete predictive maintenance system for IoT sensors
 
 ## Project Overview
 
-This system allows agricultural professionals to:
+This system allows to:
 - Monitor the health of IoT sensors across different farm zones
-- Predict potential sensor failures before they happen
+- Predict potential sensor failures
 - Visualize sensor data and maintenance predictions
 - Plan maintenance schedules based on predictive analytics
-
-## Technologies Used
-
-- **Python 3.8+** - Core programming language
-- **Django 4.2+** - Web framework for the dashboard
-- **Pandas & NumPy** - Data manipulation and analysis
-- **Scikit-learn** - Machine learning algorithms
-- **Matplotlib & Seaborn** - Data visualization
-- **SQLite** - Database (built into Django)
 
 ## Project Structure
 
@@ -89,17 +80,17 @@ Then visit `http://127.0.0.1:8000/` in your browser.
 ## ML Pipeline Workflow
 
 1. **Data Generation/Collection**: Sensor data collection from IoT devices (temperature, humidity, voltage)
-2. **Data Preprocessing**: Cleaning, handling missing values, feature engineering
-3. **Model Training**: Training machine learning models (Random Forest, SVM, etc.)
+2. **Data Preprocessing**
+3. **Model Training** 
 4. **Prediction**: Applying models to new data to predict potential failures
-5. **Visualization**: Showing results on the dashboard with actionable insights
+5. **Visualization**: Showing results on the dashboard
 
 ## Features
 
-- **Data Visualization**: Interactive charts showing sensor health over time
+- **Data Visualization**
 - **Failure Prediction**: ML models that predict potential failures days in advance
 - **Maintenance Scheduling**: Dashboard to plan maintenance based on predictions
-- **Sensor Management**: Track and manage IoT sensor inventory and placement
+- **Sensor Management**
 
 ## Usage Examples
 
