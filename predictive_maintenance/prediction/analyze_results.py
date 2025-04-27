@@ -8,20 +8,15 @@ import json
 from pathlib import Path
 
 def load_prediction_results(results_path):
-    """Load prediction results from CSV
-    
-    Args:
-        results_path (str): Path to results CSV
-        
+    """   
     Returns:
-        pd.DataFrame: Prediction results
+        Prediction results
     """
     if not os.path.exists(results_path):
         raise FileNotFoundError(f"Results file not found: {results_path}")
     
     results = pd.read_csv(results_path)
     
-    # Convert timestamp to datetime if it exists
     if 'timestamp' in results.columns:
         results['timestamp'] = pd.to_datetime(results['timestamp'])
     
@@ -31,7 +26,7 @@ def load_maintenance_report(report_path):
     """Load maintenance report from JSON
     
     Args:
-        report_path (str): Path to report JSON
+        report_path (str)
         
     Returns:
         dict: Maintenance report
@@ -53,24 +48,21 @@ def analyze_prediction_accuracy(results):
     Returns:
         dict: Accuracy metrics
     """
-    # Check if we have true labels
     if 'status' not in results.columns:
         return None
     
-    # Convert true status to binary
+    # true status -> binary
     true_status = results['status'].apply(lambda x: 1 if x != 'normal' else 0)
     
-    # Convert predicted status to binary
+    # predicted status -> binary
     pred_status = results['predicted_status'].apply(lambda x: 1 if x == 'failure' else 0)
     
-    # Calculate metrics
     accuracy = (true_status == pred_status).mean()
     true_positive = ((true_status == 1) & (pred_status == 1)).sum()
     false_positive = ((true_status == 0) & (pred_status == 1)).sum()
     true_negative = ((true_status == 0) & (pred_status == 0)).sum()
     false_negative = ((true_status == 1) & (pred_status == 0)).sum()
     
-    # Calculate precision, recall, F1
     precision = true_positive / (true_positive + false_positive) if (true_positive + false_positive) > 0 else 0
     recall = true_positive / (true_positive + false_negative) if (true_positive + false_negative) > 0 else 0
     f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
@@ -95,23 +87,21 @@ def analyze_sensor_types(results):
     """Analyze predictions by sensor type
     
     Args:
-        results (pd.DataFrame): Prediction results
+        results (df)
         
     Returns:
-        pd.DataFrame: Prediction metrics by sensor type
+        df with prediction metrics by sensor type
     """
     if 'sensor_type' not in results.columns:
         return None
     
-    # Group by sensor type
     sensor_types = []
     
     for sensor_type, group in results.groupby('sensor_type'):
-        # Count total, predicted failures, and actual failures
         total = len(group)
         pred_failures = (group['predicted_status'] == 'failure').sum()
         
-        # Calculate actual failures if available
+        # actual failures if available
         if 'status' in group.columns:
             actual_failures = (group['status'] != 'normal').sum()
             true_positive = ((group['status'] != 'normal') & (group['predicted_status'] == 'failure')).sum()
@@ -137,18 +127,16 @@ def plot_confusion_matrix(metrics, output_dir="plots"):
     """Plot confusion matrix
     
     Args:
-        metrics (dict): Accuracy metrics
-        output_dir (str): Directory to save the plot
+        metrics (dict)
+        output_dir (str)
     """
     os.makedirs(output_dir, exist_ok=True)
     
-    # Create confusion matrix
     cm = [
         [metrics['true_negative'], metrics['false_positive']],
         [metrics['false_negative'], metrics['true_positive']]
     ]
     
-    # Plot
     plt.figure(figsize=(8, 6))
     sns.heatmap(
         cm, 
@@ -162,7 +150,7 @@ def plot_confusion_matrix(metrics, output_dir="plots"):
     plt.ylabel('Actual')
     plt.title('Confusion Matrix')
     
-    # Add accuracy metrics
+    # accuracy metrics
     plt.figtext(
         0.5, 
         0.01, 
@@ -170,7 +158,6 @@ def plot_confusion_matrix(metrics, output_dir="plots"):
         ha='center'
     )
     
-    # Save
     filepath = os.path.join(output_dir, "confusion_matrix.png")
     plt.tight_layout()
     plt.savefig(filepath)
@@ -183,21 +170,20 @@ def plot_sensor_type_metrics(sensor_metrics, output_dir="plots"):
     
     Args:
         sensor_metrics (pd.DataFrame): Metrics by sensor type
-        output_dir (str): Directory to save the plot
+        output_dir (str)
     """
     if sensor_metrics is None or len(sensor_metrics) == 0:
         return
     
     os.makedirs(output_dir, exist_ok=True)
     
-    # Plot failure rates by sensor type
+    # failure rates by sensor type
     plt.figure(figsize=(10, 6))
     sns.barplot(x='sensor_type', y='failure_rate', data=sensor_metrics)
     plt.title('Failure Rate by Sensor Type')
     plt.xlabel('Sensor Type')
     plt.ylabel('Failure Rate')
     
-    # Save
     filepath = os.path.join(output_dir, "failure_rate_by_sensor_type.png")
     plt.tight_layout()
     plt.savefig(filepath)
@@ -205,7 +191,7 @@ def plot_sensor_type_metrics(sensor_metrics, output_dir="plots"):
     
     print(f"Failure rate plot saved to {filepath}")
     
-    # If we have accuracy data, plot that too
+    # If we have accuracy data also plot
     if 'accuracy' in sensor_metrics.columns and sensor_metrics['accuracy'].notna().any():
         plt.figure(figsize=(10, 6))
         sns.barplot(x='sensor_type', y='accuracy', data=sensor_metrics)
@@ -213,7 +199,6 @@ def plot_sensor_type_metrics(sensor_metrics, output_dir="plots"):
         plt.xlabel('Sensor Type')
         plt.ylabel('Accuracy')
         
-        # Save
         filepath = os.path.join(output_dir, "accuracy_by_sensor_type.png")
         plt.tight_layout()
         plt.savefig(filepath)
@@ -233,18 +218,14 @@ def main():
     
     args = parser.parse_args()
     
-    # Ensure output directory exists
     os.makedirs(args.output_dir, exist_ok=True)
     
-    # Load prediction results
     print(f"Loading prediction results from {args.results}...")
     results = load_prediction_results(args.results)
     
-    # Load maintenance report
     print(f"Loading maintenance report from {args.report}...")
     report = load_maintenance_report(args.report)
     
-    # Analyze prediction accuracy
     metrics = analyze_prediction_accuracy(results)
     if metrics:
         print("\nPrediction Accuracy Metrics:")
@@ -257,19 +238,16 @@ def main():
         print(f"True Negatives: {metrics['true_negative']}")
         print(f"False Negatives: {metrics['false_negative']}")
         
-        # Plot confusion matrix
         plot_confusion_matrix(metrics, args.output_dir)
     
-    # Analyze by sensor type
+    # analysis by sensor type
     sensor_metrics = analyze_sensor_types(results)
     if sensor_metrics is not None:
         print("\nSensor Type Metrics:")
         print(sensor_metrics)
         
-        # Plot sensor type metrics
         plot_sensor_type_metrics(sensor_metrics, args.output_dir)
     
-    # Print maintenance report summary
     print("\nMaintenance Report Summary:")
     print(f"Total Sensors: {report['total_sensors']}")
     print(f"Sensors Needing Maintenance: {report['sensors_needing_maintenance']}")
@@ -277,7 +255,6 @@ def main():
     for sensor_type, count in report['failures_by_sensor_type'].items():
         print(f"  {sensor_type}: {count}")
     
-    # Save analysis results to text file
     summary_path = os.path.join(args.output_dir, "prediction_summary.txt")
     with open(summary_path, 'w') as f:
         f.write("Prediction Analysis Summary\n")

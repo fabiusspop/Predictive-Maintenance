@@ -10,21 +10,22 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         self.stdout.write('Creating sample data...')
         
-        # Clear existing data
+        # clear existing data
         self.stdout.write('Clearing existing data...')
         MaintenanceAlert.objects.all().delete()
         SensorData.objects.all().delete()
         Sensor.objects.all().delete()
         
-        # Create sensors
+        # sensors
         self.stdout.write('Creating sensors...')
         sensors = []
         
         sensor_types = ['Temperature', 'Pressure', 'Vibration', 'Humidity', 'Flow']
         locations = ['Building A', 'Building B', 'Factory Floor', 'Server Room', 'Warehouse']
         
-        for i in range(1, 11):  # Create 10 sensors
-            active = random.random() > 0.2  # 80% of sensors are active
+        # creating sensors
+        for i in range(1, 11): 
+            active = random.random() > 0.2  # setting: 80% of sensors active
             installation_date = timezone.now().date() - datetime.timedelta(days=random.randint(30, 365))
             
             sensor = Sensor.objects.create(
@@ -38,17 +39,17 @@ class Command(BaseCommand):
             sensors.append(sensor)
             self.stdout.write(f'  Created sensor: {sensor.name}')
         
-        # Create sensor data
+        # sensor data
         self.stdout.write('Creating sensor data...')
         status_choices = ['normal', 'warning', 'critical']
         status_weights = [0.85, 0.1, 0.05]  # 85% normal, 10% warning, 5% critical
         
         for sensor in sensors:
-            # Only create data for active sensors
+            # create data if active sensor
             if not sensor.is_active:
                 continue
                 
-            # Create data points for the last 24 hours
+            # data points for last 24 hours
             base_temp = random.uniform(20, 25)
             base_vibration = random.uniform(0.5, 2)
             base_pressure = random.uniform(990, 1015)
@@ -57,14 +58,14 @@ class Command(BaseCommand):
             for hours_ago in range(24, -1, -1):
                 timestamp = timezone.now() - datetime.timedelta(hours=hours_ago)
                 
-                # Add some randomness to the values
+                # randomness
                 temp_variation = random.uniform(-2, 2)
                 vibration_variation = random.uniform(-0.5, 0.5)
                 pressure_variation = random.uniform(-5, 5)
                 humidity_variation = random.uniform(-5, 5)
                 
-                # If we want an anomaly, make a bigger variation
-                if random.random() > 0.9:  # 10% chance of anomaly
+                # bigger variation --> anomaly, can be set
+                if random.random() > 0.9:  # -> 10% anomaly chance
                     temp_variation *= 3
                     vibration_variation *= 3
                 
@@ -73,10 +74,8 @@ class Command(BaseCommand):
                 pressure = base_pressure + pressure_variation
                 humidity = max(0, min(100, base_humidity + humidity_variation))
                 
-                # Determine status based on the values
                 status = random.choices(status_choices, status_weights)[0]
                 
-                # Some sensors may not have all types of readings
                 if sensor.sensor_type != 'Temperature':
                     temperature = None
                 if sensor.sensor_type != 'Vibration':
@@ -98,7 +97,7 @@ class Command(BaseCommand):
             
             self.stdout.write(f'  Created data for sensor: {sensor.name}')
         
-        # Create alerts
+        # alerts
         self.stdout.write('Creating maintenance alerts...')
         priority_choices = ['low', 'medium', 'high', 'critical']
         
@@ -115,11 +114,10 @@ class Command(BaseCommand):
             "Physical inspection recommended"
         ]
         
-        # Create some random alerts for each sensor
+        # assign random alerts for each sensor
         for sensor in sensors:
-            # Create between 0 and 3 alerts per sensor
             for _ in range(random.randint(0, 3)):
-                created_days_ago = random.randint(0, 14)  # Within last 2 weeks
+                created_days_ago = random.randint(0, 14)  # last 14 days
                 created_at = timezone.now() - datetime.timedelta(days=created_days_ago)
                 
                 priority = random.choice(priority_choices)
@@ -128,10 +126,9 @@ class Command(BaseCommand):
                 # 60% chance of being resolved if more than 3 days old
                 is_resolved = created_days_ago > 3 and random.random() > 0.4
                 
-                # If resolved, set the resolved time
                 resolved_at = None
                 if is_resolved:
-                    # Resolved between 1 hour and 2 days after creation
+                    # solved between 1 hour and 2 days after creation
                     hours_until_resolved = random.randint(1, 48)
                     resolved_at = created_at + datetime.timedelta(hours=hours_until_resolved)
                 

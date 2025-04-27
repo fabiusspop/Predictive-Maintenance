@@ -5,7 +5,6 @@ import random
 import datetime
 from .models import Sensor, SensorData, MaintenanceAlert
 
-# Create your views here.
 
 def dashboard_home(request):
     """View for the main dashboard page"""
@@ -32,8 +31,8 @@ def sensor_list(request):
 def sensor_detail(request, pk):
     """View for detailed information about a specific sensor"""
     sensor = get_object_or_404(Sensor, pk=pk)
-    readings = sensor.readings.order_by('-timestamp')[:50]  # Get last 50 readings
-    alerts = sensor.alerts.order_by('-timestamp')[:10]  # Get last 10 alerts
+    readings = sensor.readings.order_by('-timestamp')[:50]  # last 50 readings
+    alerts = sensor.alerts.order_by('-timestamp')[:10]  # last 10 alerts
     
     context = {
         'sensor': sensor,
@@ -44,7 +43,7 @@ def sensor_detail(request, pk):
 
 def sensor_data_list(request):
     """View for listing sensor data/readings"""
-    data = SensorData.objects.all().order_by('-timestamp')[:100]  # Get last 100 readings
+    data = SensorData.objects.all().order_by('-timestamp')[:100]  # last 100 readings
     context = {'data': data}
     return render(request, 'maintenance/sensor_data_list.html', context)
 
@@ -52,7 +51,7 @@ def alert_list(request):
     """View for listing all maintenance alerts"""
     alerts = MaintenanceAlert.objects.all().order_by('-timestamp')
     
-    # Calculate counts for different priorities
+    # counts per priority
     critical_count = MaintenanceAlert.objects.filter(priority='critical', is_resolved=False).count()
     high_count = MaintenanceAlert.objects.filter(priority='high', is_resolved=False).count()
     medium_count = MaintenanceAlert.objects.filter(priority='medium', is_resolved=False).count()
@@ -73,41 +72,38 @@ def alert_detail(request, pk):
     context = {'alert': alert}
     return render(request, 'maintenance/alert_detail.html', context)
 
-# Utility Functions
 
 def generate_data(request):
     """View for generating sample data"""
-    # Get active sensors
     active_sensors = Sensor.objects.filter(is_active=True)
     
     if not active_sensors.exists():
         messages.error(request, "No active sensors found. Please activate sensors first.")
         return redirect('maintenance:dashboard_home')
     
-    # Generate data for each active sensor
+    # generate data for each active sensor
     data_count = 0
     status_choices = ['normal', 'warning', 'critical']
     status_weights = [0.85, 0.1, 0.05]
     
     for sensor in active_sensors:
-        # Create data for the last hour
+        # generate data for last hour
         base_temp = random.uniform(20, 25)
         base_vibration = random.uniform(0.5, 2)
         base_pressure = random.uniform(990, 1015)
         base_humidity = random.uniform(40, 60)
         
-        # Generate 10 readings per sensor
-        for minutes_ago in range(60, 0, -6):  # Every 6 minutes, for the last hour
+        # 10 readings per sensor, every 6 minutes for last hour
+        for minutes_ago in range(60, 0, -6):  
             timestamp = timezone.now() - datetime.timedelta(minutes=minutes_ago)
             
-            # Add some randomness to the values
+            # randomness
             temp_variation = random.uniform(-1, 1)
             vibration_variation = random.uniform(-0.2, 0.2)
             pressure_variation = random.uniform(-2, 2)
             humidity_variation = random.uniform(-3, 3)
             
-            # If we want an anomaly, make a bigger variation
-            if random.random() > 0.9:  # 10% chance of anomaly
+            if random.random() > 0.9:  # 10% anomaly chance
                 temp_variation *= 3
                 vibration_variation *= 3
             
@@ -116,10 +112,8 @@ def generate_data(request):
             pressure = base_pressure + pressure_variation
             humidity = max(0, min(100, base_humidity + humidity_variation))
             
-            # Determine status based on the values
             status = random.choices(status_choices, status_weights)[0]
             
-            # Some sensors may not have all types of readings
             if sensor.sensor_type != 'Temperature':
                 temperature = None
             if sensor.sensor_type != 'Vibration':
@@ -140,13 +134,13 @@ def generate_data(request):
             )
             data_count += 1
     
-    # Generate random alerts based on the new data
+    # random alerts based on the new data
     alert_count = 0
     for sensor in active_sensors:
         # 30% chance to generate an alert per sensor
         if random.random() < 0.3:
             priority_choices = ['low', 'medium', 'high', 'critical']
-            priority_weights = [0.4, 0.3, 0.2, 0.1]  # Weighted towards less severe
+            priority_weights = [0.4, 0.3, 0.2, 0.1]  # less severe, can be adjusted
             
             alert_messages = [
                 "Temperature exceeds normal operating range",
@@ -166,29 +160,26 @@ def generate_data(request):
             )
             alert_count += 1
     
-    # Success message
     messages.success(request, f"Successfully generated {data_count} new data points and {alert_count} alerts.")
     return redirect('maintenance:dashboard_home')
 
 def train_model(request):
     """View for simulating model training"""
-    # Just a placeholder for now
     import time
-    time.sleep(2)  # Simulate training time
+    time.sleep(2)  
     
     messages.success(request, "Model training completed successfully! Predictive maintenance model is now up to date.")
     return redirect('maintenance:dashboard_home')
 
 def predict(request):
     """View for simulating predictions"""
-    # Get active sensors
     active_sensors = Sensor.objects.filter(is_active=True)
     
     if not active_sensors.exists():
         messages.error(request, "No active sensors found. Cannot make predictions.")
         return redirect('maintenance:dashboard_home')
     
-    # Randomly select some sensors to generate predictive alerts for
+    # selection of sensors to generate predictive alerts (random)
     prediction_count = 0
     for sensor in active_sensors:
         # 20% chance to predict an issue for each sensor
@@ -201,7 +192,7 @@ def predict(request):
                 "Deteriorating performance detected - maintenance advised"
             ]
             
-            # Create a predictive alert
+            # prediction alert
             MaintenanceAlert.objects.create(
                 sensor=sensor,
                 timestamp=timezone.now(),

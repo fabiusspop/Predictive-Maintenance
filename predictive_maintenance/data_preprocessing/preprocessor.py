@@ -7,27 +7,16 @@ import os
 
 class SensorDataPreprocessor:
     def __init__(self):
-        """Initialize the data preprocessor for sensor data"""
         self.scaler = None
         self.categorical_encoder = None
         self.feature_pipeline = None
     
     def load_data(self, data_path):
-        """Load sensor data from CSV file
-        
-        Args:
-            data_path (str): Path to the CSV file
-            
-        Returns:
-            pd.DataFrame: Loaded data
-        """
         if not os.path.exists(data_path):
             raise FileNotFoundError(f"Data file not found: {data_path}")
         
-        # Load data
         data = pd.read_csv(data_path)
         
-        # Convert timestamp to datetime
         data['timestamp'] = pd.to_datetime(data['timestamp'])
         
         return data
@@ -36,32 +25,27 @@ class SensorDataPreprocessor:
         """Extract features from raw sensor data
         
         Args:
-            data (pd.DataFrame): Raw sensor data
+            data
             
         Returns:
-            pd.DataFrame: DataFrame with extracted features
+            df with extracted features
         """
-        # Create a copy to avoid modifying the original data
         df = data.copy()
         
-        # Extract time-based features
         df['hour'] = df['timestamp'].dt.hour
         df['day'] = df['timestamp'].dt.day
         df['month'] = df['timestamp'].dt.month
         df['day_of_week'] = df['timestamp'].dt.dayofweek
         df['is_weekend'] = df['day_of_week'].isin([5, 6]).astype(int)
         
-        # Create sensor type column from sensor_id
-        # Handle special case for soil_moisture which has an underscore in the type name
         df['sensor_type'] = df['sensor_id'].apply(self._extract_sensor_type)
         
-        # Create numerical sensor_id feature
         df['sensor_number'] = df['sensor_id'].apply(self._extract_sensor_number)
         
-        # Create binary target variable (1 for failure, 0 for normal)
+        # (1 failure, 0 normal)
         df['target'] = df['status'].apply(lambda x: 0 if x == 'normal' else 1)
         
-        # Create failure type column (for multi-class classification)
+        # failure type -> multi-class classification)
         df['failure_type'] = df['status'].apply(lambda x: x if x == 'normal' else x.split('_')[1])
         
         return df
@@ -70,29 +54,19 @@ class SensorDataPreprocessor:
         """Extract sensor type from sensor_id
         
         Args:
-            sensor_id (str): Sensor ID string
+            sensor_id 
             
         Returns:
-            str: Sensor type
+            Sensor type
         """
-        # Handle special case for soil_moisture
         if sensor_id.startswith('soil_moisture'):
             return 'soil_moisture'
         else:
             return sensor_id.split('_')[0]
     
     def _extract_sensor_number(self, sensor_id):
-        """Extract sensor number from sensor_id
-        
-        Args:
-            sensor_id (str): Sensor ID string
-            
-        Returns:
-            int: Sensor number
-        """
-        # Handle special case for soil_moisture
+    
         if sensor_id.startswith('soil_moisture'):
-            # For soil_moisture_X, we want to get X
             return int(sensor_id.split('_')[2])
         else:
             return int(sensor_id.split('_')[1])
@@ -106,36 +80,34 @@ class SensorDataPreprocessor:
             group_by (str): Column to group by before calculating rolling features
             
         Returns:
-            pd.DataFrame: DataFrame with additional rolling features
+            df with additional rolling features
         """
-        # Create a copy to avoid modifying the original data
         df = data.copy()
         
-        # Sort by timestamp and group by sensor_id
+        # sort by timestamp and group by sensor_id
         df = df.sort_values(['sensor_id', 'timestamp'])
         
-        # For each group (sensor_id), calculate rolling statistics
+        # calculate rolling statistics for each group
         for window in window_sizes:
             grouped = df.groupby(group_by)
             
-            # Calculate rolling mean
+            # rolling mean
             df[f'rolling_mean_{window}'] = grouped['value'].transform(
                 lambda x: x.rolling(window=window, min_periods=1).mean()
             )
             
-            # Calculate rolling standard deviation
+            # rolling std
             df[f'rolling_std_{window}'] = grouped['value'].transform(
                 lambda x: x.rolling(window=window, min_periods=1).std()
             )
             
-            # Calculate rate of change
+            # rate of change
             df[f'rolling_roc_{window}'] = grouped['value'].transform(
                 lambda x: x.rolling(window=window, min_periods=2).apply(
                     lambda y: (y.iloc[-1] - y.iloc[0]) / y.iloc[0] if y.iloc[0] != 0 else 0
                 )
             )
             
-        # Fill NaN values that may have been created
         df = df.fillna(0)
         
         return df
@@ -156,32 +128,28 @@ class SensorDataPreprocessor:
             categorical_features = ['sensor_type', 'sensor_id']
             
         if numerical_features is None:
-            # Use all numerical columns except the target and timestamp
             numerical_features = data.select_dtypes(include=['int64', 'float64']).columns.tolist()
             numerical_features = [f for f in numerical_features 
                                 if f not in ['target'] and 'timestamp' not in f]
         
-        # Define preprocessing for numerical features
+        # preprocessing for numerical features
         numerical_transformer = Pipeline(steps=[
             ('scaler', StandardScaler())
         ])
         
-        # Define preprocessing for categorical features
+        # preprocessing for categorical features
         categorical_transformer = Pipeline(steps=[
             ('onehot', OneHotEncoder(handle_unknown='ignore'))
         ])
         
-        # Combine preprocessing steps
         preprocessor = ColumnTransformer(
             transformers=[
                 ('num', numerical_transformer, numerical_features),
                 ('cat', categorical_transformer, categorical_features)
             ])
-        
-        # Save the pipeline for later use
+    
         self.feature_pipeline = preprocessor
         
-        # Prepare the data
         X = data.drop(['timestamp', 'status', 'target', 'failure_type'], axis=1)
         y = data['target']
         
@@ -215,7 +183,6 @@ class SensorDataPreprocessor:
         if self.feature_pipeline is None:
             raise ValueError("Pipeline not fitted yet. Call prepare_for_training first.")
         
-        # Prepare the data
         X = data.drop(['timestamp', 'status', 'target', 'failure_type'], axis=1, errors='ignore')
         
         return self.feature_pipeline.transform(X)
@@ -225,33 +192,25 @@ class SensorDataPreprocessor:
         
         Args:
             data (pd.DataFrame): Preprocessed data
-            output_path (str): Path to save the CSV file
+            output_path
         """
         data.to_csv(output_path, index=False)
         print(f"Preprocessed data saved to {output_path}")
 
 
 if __name__ == "__main__":
-    # Example usage
     preprocessor = SensorDataPreprocessor()
-    
-    # Load data
+
     data_path = "../../data/sensor_data.csv"
     data = preprocessor.load_data(data_path)
     
-    # Extract features
     features_df = preprocessor.extract_features(data)
-    
-    # Create rolling features
     processed_df = preprocessor.create_rolling_features(features_df)
     
-    # Save preprocessed data
     preprocessor.save_preprocessed_data(processed_df, "../../data/preprocessed_data.csv")
     
-    # Prepare data for training
     X, y = preprocessor.prepare_for_training(processed_df)
     
-    # Output information about the preprocessed data
     print(f"Original data shape: {data.shape}")
     print(f"Preprocessed data shape: {processed_df.shape}")
     print(f"Training data shape: X={X.shape}, y={y.shape}")

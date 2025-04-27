@@ -5,15 +5,10 @@ from datetime import datetime, timedelta
 
 class SensorDataGenerator:
     def __init__(self, output_dir="data"):
-        """Initialize the sensor data generator.
-        
-        Args:
-            output_dir (str): Directory to save generated data
-        """
         self.output_dir = output_dir
         os.makedirs(output_dir, exist_ok=True)
         
-        # Define sensor types and their normal operating ranges
+        # sensor types and their normal operating ranges
         self.sensor_types = {
             "temperature": {"min": 20, "max": 30, "unit": "°C"},
             "humidity": {"min": 40, "max": 70, "unit": "%"},
@@ -29,7 +24,7 @@ class SensorDataGenerator:
             days (int): Number of days to spread the data over
             
         Returns:
-            pd.DataFrame: Generated sensor data
+            Generated sensor data
         """
         if sensor_type not in self.sensor_types:
             raise ValueError(f"Unknown sensor type: {sensor_type}")
@@ -37,7 +32,7 @@ class SensorDataGenerator:
         sensor_range = self.sensor_types[sensor_type]
         min_val, max_val = sensor_range["min"], sensor_range["max"]
         
-        # Generate timestamps spanning the specified number of days
+        # timestamps spanning the specified number of days
         end_time = datetime.now()
         start_time = end_time - timedelta(days=days)
         timestamps = [start_time + timedelta(
@@ -45,12 +40,12 @@ class SensorDataGenerator:
         ) for _ in range(num_samples)]
         timestamps.sort()
         
-        # Generate normal values with some random noise
+        # normal values with some random noise
         mean = (min_val + max_val) / 2
-        std_dev = (max_val - min_val) / 6  # 3 sigma rule
+        std_dev = (max_val - min_val) / 6  
         values = np.random.normal(mean, std_dev, num_samples)
         
-        # Generate sensor IDs (assuming 5 sensors per type)
+        # Generate sensor IDs
         sensor_ids = [f"{sensor_type}_{np.random.randint(1, 6)}" for _ in range(num_samples)]
         
         # Create DataFrame
@@ -73,7 +68,7 @@ class SensorDataGenerator:
             failure_type (str): Type of failure pattern
             
         Returns:
-            pd.DataFrame: Generated failure data
+            Generated failure data
         """
         if sensor_type not in self.sensor_types:
             raise ValueError(f"Unknown sensor type: {sensor_type}")
@@ -112,13 +107,12 @@ class SensorDataGenerator:
                     values[i] = max_val * (1.5 + np.random.random() * 0.5)
                 else:
                     values[i] = min_val * (0.5 - np.random.random() * 0.3)
-        else:  # "noise"
+        else: 
             # Excessive noise
             mean = (min_val + max_val) / 2
-            std_dev = (max_val - min_val) / 2  # Much higher std dev
+            std_dev = (max_val - min_val) / 2  # much higher
             values = np.random.normal(mean, std_dev, num_samples)
         
-        # Create DataFrame
         df = pd.DataFrame({
             "timestamp": timestamps,
             "sensor_id": sensor_ids,
@@ -138,16 +132,16 @@ class SensorDataGenerator:
             include_failures (bool): Whether to include failure data
             
         Returns:
-            pd.DataFrame: Combined dataset
+            combined dataset
         """
         all_data = []
         
-        # Generate normal data for each sensor type
+        # normal data for each sensor type
         for sensor_type in self.sensor_types:
             normal_data = self.generate_normal_data(sensor_type, normal_samples)
             all_data.append(normal_data)
             
-            # Generate failure data if requested
+            # failure data if requested
             if include_failures:
                 failure_types = ["drift", "spike", "noise"]
                 for failure_type in failure_types:
@@ -158,7 +152,6 @@ class SensorDataGenerator:
                     )
                     all_data.append(failure_data)
         
-        # Combine all data
         combined_df = pd.concat(all_data, ignore_index=True)
         combined_df.sort_values("timestamp", inplace=True)
         
@@ -166,10 +159,6 @@ class SensorDataGenerator:
     
     def save_dataset(self, dataset, filename="sensor_data.csv"):
         """Save the generated dataset to a CSV file.
-        
-        Args:
-            dataset (pd.DataFrame): Dataset to save
-            filename (str): Name of the output file
         """
         filepath = os.path.join(self.output_dir, filename)
         dataset.to_csv(filepath, index=False)
@@ -177,12 +166,10 @@ class SensorDataGenerator:
 
 
 if __name__ == "__main__":
-    # Example usage
     generator = SensorDataGenerator("../../data")
     dataset = generator.generate_dataset(normal_samples=5000, failure_samples=500)
     generator.save_dataset(dataset)
     
-    # Output some statistics
     print(f"Dataset shape: {dataset.shape}")
     print(f"Sensor types: {dataset['sensor_id'].nunique()}")
     print("Status distribution:")
