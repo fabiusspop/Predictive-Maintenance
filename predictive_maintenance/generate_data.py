@@ -3,7 +3,6 @@ import sys
 import argparse
 from pathlib import Path
 
-# Add the project root to the path so we can import our modules
 sys.path.append(str(Path(__file__).parent))
 
 from data_generation.sensor_data_generator import SensorDataGenerator
@@ -23,10 +22,8 @@ def main():
     
     args = parser.parse_args()
     
-    # Create output directory
     os.makedirs(args.output, exist_ok=True)
     
-    # Create plots directory if visualizing
     plots_dir = os.path.join(args.output, 'plots')
     if args.visualize:
         os.makedirs(plots_dir, exist_ok=True)

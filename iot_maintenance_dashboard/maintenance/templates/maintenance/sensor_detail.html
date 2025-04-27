@@ -1,0 +1,181 @@
+{% extends 'maintenance/base.html' %}
+
+{% block title %}{{ sensor.name }} - IoT Maintenance{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'maintenance:dashboard_home' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'maintenance:sensor_list' %}">Sensors</a></li>
+            <li class="breadcrumb-item active">{{ sensor.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row mb-4">
+        <!-- Sensor Details Card -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Sensor Details</h5>
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title">{{ sensor.name }}</h3>
+                    <p class="badge bg-{% if sensor.is_active %}success{% else %}danger{% endif %} mb-3">
+                        {% if sensor.is_active %}Active{% else %}Inactive{% endif %}
+                    </p>
+                    
+                    <dl class="row">
+                        <dt class="col-sm-4">Type:</dt>
+                        <dd class="col-sm-8">{{ sensor.sensor_type }}</dd>
+                        
+                        <dt class="col-sm-4">Location:</dt>
+                        <dd class="col-sm-8">{{ sensor.location }}</dd>
+                        
+                        <dt class="col-sm-4">Installed:</dt>
+                        <dd class="col-sm-8">{{ sensor.installation_date|date:"F d, Y" }}</dd>
+                    </dl>
+
+                    <div class="mt-3">
+                        <h6>Description:</h6>
+                        <p>{{ sensor.description|default:"No description provided." }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Reading -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Latest Readings</h5>
+                </div>
+                <div class="card-body">
+                    {% if readings %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Temperature</th>
+                                    <th>Vibration</th>
+                                    <th>Pressure</th>
+                                    <th>Humidity</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reading in readings|slice:":10" %}
+                                <tr class="{% if reading.status != 'normal' %}table-warning{% endif %}">
+                                    <td>{{ reading.timestamp|date:"M d, H:i:s" }}</td>
+                                    <td>{{ reading.temperature|default:"-" }}°C</td>
+                                    <td>{{ reading.vibration|default:"-" }}</td>
+                                    <td>{{ reading.pressure|default:"-" }} hPa</td>
+                                    <td>{{ reading.humidity|default:"-" }}%</td>
+                                    <td>
+                                        <span class="badge bg-{% if reading.status == 'normal' %}success{% else %}warning{% endif %}">
+                                            {{ reading.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No readings available for this sensor.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alerts -->
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">Recent Alerts</h5>
+        </div>
+        <div class="card-body">
+            {% if alerts %}
+            <div class="list-group">
+                {% for alert in alerts %}
+                <a href="{% url 'maintenance:alert_detail' alert.pk %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">Alert #{{ alert.pk }}</h6>
+                        <small>{{ alert.timestamp|date:"M d, H:i" }}</small>
+                    </div>
+                    <p class="mb-1">{{ alert.message }}</p>
+                    <div>
+                        <span class="badge bg-{% if alert.priority == 'critical' %}danger{% elif alert.priority == 'high' %}warning{% elif alert.priority == 'medium' %}info{% else %}secondary{% endif %}">
+                            {{ alert.priority }}
+                        </span>
+                        <span class="badge bg-{% if alert.is_resolved %}success{% else %}secondary{% endif %}">
+                            {% if alert.is_resolved %}Resolved{% else %}Open{% endif %}
+                        </span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">No alerts for this sensor.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Temperature Chart -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Temperature History</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="temperatureChart" height="300"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Only create chart if we have readings
+        {% if readings %}
+        const ctx = document.getElementById('temperatureChart').getContext('2d');
+        
+        const timestamps = [
+            {% for reading in readings %}
+                '{{ reading.timestamp|date:"H:i:s" }}',
+            {% endfor %}
+        ];
+        
+        const temperatures = [
+            {% for reading in readings %}
+                {% if reading.temperature %}{{ reading.temperature }}{% else %}null{% endif %},
+            {% endfor %}
+        ];
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: timestamps.reverse(),
+                datasets: [{
+                    label: 'Temperature (°C)',
+                    data: temperatures.reverse(),
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: false
+                    }
+                }
+            }
+        });
+        {% endif %}
+    });
+</script>
+{% endblock %} 

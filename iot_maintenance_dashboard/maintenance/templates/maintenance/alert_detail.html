@@ -1,0 +1,101 @@
+{% extends 'maintenance/base.html' %}
+
+{% block title %}Alert Details - IoT Maintenance{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'maintenance:dashboard_home' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'maintenance:alert_list' %}">Alerts</a></li>
+            <li class="breadcrumb-item active">Alert #{{ alert.pk }}</li>
+        </ol>
+    </nav>
+
+    <div class="card mb-4">
+        <div class="card-header bg-{% if alert.priority == 'critical' %}danger{% elif alert.priority == 'high' %}warning{% elif alert.priority == 'medium' %}info{% else %}secondary{% endif %} {% if alert.priority == 'high' or alert.priority == 'low' %}text-dark{% else %}text-white{% endif %}">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Alert #{{ alert.pk }}</h5>
+                <span class="badge bg-{% if alert.is_resolved %}success{% else %}secondary{% endif %}">
+                    {% if alert.is_resolved %}Resolved{% else %}Open{% endif %}
+                </span>
+            </div>
+        </div>
+        <div class="card-body">
+            <h4 class="card-title mb-3">{{ alert.message }}</h4>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <dl class="row">
+                        <dt class="col-sm-4">Priority:</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-{% if alert.priority == 'critical' %}danger{% elif alert.priority == 'high' %}warning{% elif alert.priority == 'medium' %}info{% else %}secondary{% endif %}">
+                                {{ alert.priority }}
+                            </span>
+                        </dd>
+                        
+                        <dt class="col-sm-4">Created:</dt>
+                        <dd class="col-sm-8">{{ alert.timestamp|date:"F d, Y H:i:s" }}</dd>
+                        
+                        {% if alert.is_resolved %}
+                        <dt class="col-sm-4">Resolved:</dt>
+                        <dd class="col-sm-8">{{ alert.resolved_at|date:"F d, Y H:i:s" }}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+                
+                <div class="col-md-6">
+                    <h5>Affected Sensor</h5>
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title">{{ alert.sensor.name }}</h6>
+                            <p class="card-subtitle mb-2 text-muted">{{ alert.sensor.sensor_type }} | {{ alert.sensor.location }}</p>
+                            <p class="mb-2">
+                                Status: 
+                                {% if alert.sensor.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </p>
+                            <a href="{% url 'maintenance:sensor_detail' alert.sensor.pk %}" class="btn btn-sm btn-outline-primary">View Sensor</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Recommended Actions</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% if alert.priority == 'critical' %}
+                        <li class="list-group-item">Immediately dispatch maintenance personnel</li>
+                        <li class="list-group-item">Check sensor power supply and connections</li>
+                        <li class="list-group-item">Verify environmental conditions around the sensor</li>
+                        <li class="list-group-item">Consider emergency shutdown if safety critical</li>
+                        {% elif alert.priority == 'high' %}
+                        <li class="list-group-item">Schedule maintenance within 24 hours</li>
+                        <li class="list-group-item">Monitor sensor readings for further degradation</li>
+                        <li class="list-group-item">Check related systems for impacts</li>
+                        {% elif alert.priority == 'medium' %}
+                        <li class="list-group-item">Schedule maintenance check during next available window</li>
+                        <li class="list-group-item">Add to weekly maintenance report</li>
+                        {% else %}
+                        <li class="list-group-item">Document in maintenance log</li>
+                        <li class="list-group-item">Monitor during regular maintenance</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            
+            {% if not alert.is_resolved %}
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="#" class="btn btn-success">Mark as Resolved</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

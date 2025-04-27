@@ -1,0 +1,61 @@
+{% extends 'maintenance/base.html' %}
+
+{% block title %}Sensor Data - IoT Maintenance{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Sensor Data</h1>
+    </div>
+    
+    {% if data %}
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Recent Readings</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Sensor</th>
+                            <th>Timestamp</th>
+                            <th>Temperature</th>
+                            <th>Vibration</th>
+                            <th>Pressure</th>
+                            <th>Humidity</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reading in data %}
+                        <tr class="{% if reading.status != 'normal' %}table-warning{% endif %}">
+                            <td>
+                                <a href="{% url 'maintenance:sensor_detail' reading.sensor.pk %}">
+                                    {{ reading.sensor.name }}
+                                </a>
+                            </td>
+                            <td>{{ reading.timestamp|date:"M d, H:i:s" }}</td>
+                            <td>{{ reading.temperature|default:"-" }}°C</td>
+                            <td>{{ reading.vibration|default:"-" }}</td>
+                            <td>{{ reading.pressure|default:"-" }} hPa</td>
+                            <td>{{ reading.humidity|default:"-" }}%</td>
+                            <td>
+                                <span class="badge bg-{% if reading.status == 'normal' %}success{% else %}warning{% endif %}">
+                                    {{ reading.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <p>No sensor data available.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

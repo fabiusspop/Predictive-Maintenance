@@ -1,0 +1,52 @@
+{% extends 'maintenance/base.html' %}
+
+{% block title %}Sensors - IoT Maintenance{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Sensors</h1>
+    </div>
+    
+    {% if sensors %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Installation Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sensor in sensors %}
+                <tr>
+                    <td>{{ sensor.name }}</td>
+                    <td>{{ sensor.sensor_type }}</td>
+                    <td>{{ sensor.location }}</td>
+                    <td>
+                        {% if sensor.is_active %}
+                        <span class="badge bg-success">Active</span>
+                        {% else %}
+                        <span class="badge bg-danger">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ sensor.installation_date|date:"M d, Y" }}</td>
+                    <td>
+                        <a href="{% url 'maintenance:sensor_detail' sensor.pk %}" class="btn btn-sm btn-outline-primary">Details</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <p>No sensors have been added yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 
