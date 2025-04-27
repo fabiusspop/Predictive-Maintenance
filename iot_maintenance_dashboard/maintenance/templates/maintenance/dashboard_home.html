@@ -3,153 +3,116 @@
 {% block title %}Dashboard - IoT Maintenance{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <h1 class="mb-4">IoT Maintenance Dashboard</h1>
-    
-    <!-- Summary cards -->
-    <div class="row mb-4">
-        <div class="col-md-4 mb-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Sensors</h5>
-                    <p class="card-text display-4">{{ active_sensors }}/{{ total_sensors }}</p>
-                    <p class="card-text">Active sensors</p>
-                </div>
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">System Overview</h5>
             </div>
-        </div>
-        <div class="col-md-4 mb-3">
-            <div class="card bg-warning text-dark">
-                <div class="card-body">
-                    <h5 class="card-title">Alerts</h5>
-                    <p class="card-text display-4">{{ total_alerts }}</p>
-                    <p class="card-text">Active alerts</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 mb-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h5 class="card-title">System Status</h5>
-                    <p class="card-text display-4">Online</p>
-                    <p class="card-text">All systems operational</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Recent alerts -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0">Recent Alerts</h5>
-                </div>
-                <div class="card-body">
-                    {% if alerts %}
-                    <div class="list-group">
-                        {% for alert in alerts %}
-                        <a href="{% url 'maintenance:alert_detail' alert.pk %}" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">{{ alert.sensor.name }}</h6>
-                                <small>{{ alert.timestamp|date:"M d, H:i" }}</small>
-                            </div>
-                            <p class="mb-1">{{ alert.message }}</p>
-                            <span class="badge bg-{% if alert.priority == 'critical' %}danger{% elif alert.priority == 'high' %}warning{% elif alert.priority == 'medium' %}info{% else %}secondary{% endif %}">
-                                {{ alert.priority }}
-                            </span>
-                        </a>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <p class="text-muted">No recent alerts.</p>
-                    {% endif %}
-                </div>
-                <div class="card-footer">
-                    <a href="{% url 'maintenance:alert_list' %}" class="btn btn-sm btn-outline-warning">View all alerts</a>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Recent sensor data -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Recent Sensor Data</h5>
-                </div>
-                <div class="card-body">
-                    {% if recent_data %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Sensor</th>
-                                    <th>Time</th>
-                                    <th>Status</th>
-                                    <th>Temp</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for reading in recent_data %}
-                                <tr class="{% if reading.status != 'normal' %}table-warning{% endif %}">
-                                    <td>{{ reading.sensor.name }}</td>
-                                    <td>{{ reading.timestamp|date:"H:i:s" }}</td>
-                                    <td>{{ reading.status }}</td>
-                                    <td>{{ reading.temperature|default:"-" }}°C</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <p class="text-muted">No recent data.</p>
-                    {% endif %}
-                </div>
-                <div class="card-footer">
-                    <a href="{% url 'maintenance:sensor_data_list' %}" class="btn btn-sm btn-outline-primary">View all data</a>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Sensors overview -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">Sensors Overview</h5>
-                </div>
-                <div class="card-body">
-                    {% if sensors %}
-                    <div class="row">
-                        {% for sensor in sensors %}
-                        <div class="col-md-3 mb-3">
-                            <div class="card h-100 {% if not sensor.is_active %}border-danger{% endif %}">
-                                <div class="card-body">
-                                    <h6 class="card-title">{{ sensor.name }}</h6>
-                                    <p class="card-subtitle mb-2 text-muted">{{ sensor.sensor_type }} | {{ sensor.location }}</p>
-                                    <p class="mb-0">
-                                        Status: 
-                                        {% if sensor.is_active %}
-                                        <span class="badge bg-success">Active</span>
-                                        {% else %}
-                                        <span class="badge bg-danger">Inactive</span>
-                                        {% endif %}
-                                    </p>
-                                </div>
-                                <div class="card-footer">
-                                    <a href="{% url 'maintenance:sensor_detail' sensor.pk %}" class="btn btn-sm btn-outline-secondary">Details</a>
-                                </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card bg-primary text-white h-100">
+                            <div class="card-body text-center">
+                                <h4>Sensors</h4>
+                                <h2 class="display-4">{{ active_sensors }}/{{ total_sensors }}</h2>
+                                <p>Active sensors</p>
                             </div>
                         </div>
-                        {% endfor %}
                     </div>
-                    {% else %}
-                    <p class="text-muted">No sensors configured.</p>
-                    {% endif %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card bg-warning text-dark h-100">
+                            <div class="card-body text-center">
+                                <h4>Alerts</h4>
+                                <h2 class="display-4">{{ total_alerts }}</h2>
+                                <p>Active alerts</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card bg-success text-white h-100">
+                            <div class="card-body text-center">
+                                <h4>Status</h4>
+                                <h2 class="display-4">Online</h2>
+                                <p>All systems operational</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-footer">
-                    <a href="{% url 'maintenance:sensor_list' %}" class="btn btn-sm btn-outline-success">View all sensors</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Data Panel -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Recent Data</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_data %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>Sensor</th>
+                                <th>Time</th>
+                                <th>Temp</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reading in recent_data|slice:":5" %}
+                            <tr class="{% if reading.status != 'normal' %}table-warning{% endif %}">
+                                <td>{{ reading.sensor.name }}</td>
+                                <td>{{ reading.timestamp|date:"H:i:s" }}</td>
+                                <td>{{ reading.temperature|default:"-" }}°C</td>
+                                <td>
+                                    <span class="badge bg-{% if reading.status == 'normal' %}success{% else %}warning{% endif %}">
+                                        {{ reading.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
+                <a href="{% url 'maintenance:sensor_data_list' %}" class="btn btn-sm btn-outline-primary mt-2">View all data</a>
+                {% else %}
+                <p class="text-muted">No recent data.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Alerts Panel -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Recent Alerts</h5>
+            </div>
+            <div class="card-body">
+                {% if alerts %}
+                <div class="list-group">
+                    {% for alert in alerts|slice:":5" %}
+                    <a href="{% url 'maintenance:alert_detail' alert.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ alert.sensor.name }}</h6>
+                            <small>{{ alert.timestamp|date:"M d, H:i" }}</small>
+                        </div>
+                        <p class="mb-1">{{ alert.message }}</p>
+                        <span class="badge bg-{% if alert.priority == 'critical' %}danger{% elif alert.priority == 'high' %}warning{% elif alert.priority == 'medium' %}info{% else %}secondary{% endif %}">
+                            {{ alert.priority }}
+                        </span>
+                    </a>
+                    {% endfor %}
+                </div>
+                <a href="{% url 'maintenance:alert_list' %}" class="btn btn-sm btn-outline-warning mt-2">View all alerts</a>
+                {% else %}
+                <p class="text-muted">No recent alerts.</p>
+                {% endif %}
             </div>
         </div>
     </div>

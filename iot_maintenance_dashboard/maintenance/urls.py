@@ -17,4 +17,9 @@ urlpatterns = [
     # URL patterns for maintenance alerts
     path('alerts/', views.alert_list, name='alert_list'),
     path('alerts/<int:pk>/', views.alert_detail, name='alert_detail'),
+    
+    # Utility URLs
+    path('utilities/generate-data/', views.generate_data, name='generate_data'),
+    path('utilities/train-model/', views.train_model, name='train_model'),
+    path('utilities/predict/', views.predict, name='predict'),
 ] 
