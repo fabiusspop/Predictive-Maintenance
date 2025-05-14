@@ -45,10 +45,8 @@ class SensorDataGenerator:
         std_dev = (max_val - min_val) / 6  
         values = np.random.normal(mean, std_dev, num_samples)
         
-        # Generate sensor IDs
         sensor_ids = [f"{sensor_type}_{np.random.randint(1, 6)}" for _ in range(num_samples)]
         
-        # Create DataFrame
         df = pd.DataFrame({
             "timestamp": timestamps,
             "sensor_id": sensor_ids,
@@ -76,7 +74,7 @@ class SensorDataGenerator:
         sensor_range = self.sensor_types[sensor_type]
         min_val, max_val = sensor_range["min"], sensor_range["max"]
         
-        # Generate timestamps for the last 3 days
+        # timestamps for the last 3 days
         end_time = datetime.now()
         start_time = end_time - timedelta(days=3)
         timestamps = [start_time + timedelta(
@@ -84,22 +82,21 @@ class SensorDataGenerator:
         ) for _ in range(num_samples)]
         timestamps.sort()
         
-        # Generate sensor ID (use just one sensor ID for the failure data)
+        # sensor data +  one sensor ID for the failure data)
         sensor_id = f"{sensor_type}_{np.random.randint(1, 6)}"
         sensor_ids = [sensor_id] * num_samples
         
-        # Generate values based on failure type
         if failure_type == "drift":
-            # Gradual drift beyond normal range
+            # gradual drift from normal range
             base = np.linspace(max_val, max_val * 1.5, num_samples)
             noise = np.random.normal(0, (max_val - min_val) / 20, num_samples)
             values = base + noise
         elif failure_type == "spike":
-            # Random spikes well beyond normal range
+            # random spikes 
             mean = (min_val + max_val) / 2
             std_dev = (max_val - min_val) / 6
             values = np.random.normal(mean, std_dev, num_samples)
-            # Add spikes to ~30% of values
+            # spikes to  1/3 of values
             spike_indices = np.random.choice(num_samples, size=int(num_samples * 0.3), replace=False)
             spike_direction = np.random.choice([-1, 1], size=len(spike_indices))
             for i, direction in zip(spike_indices, spike_direction):
@@ -108,7 +105,7 @@ class SensorDataGenerator:
                 else:
                     values[i] = min_val * (0.5 - np.random.random() * 0.3)
         else: 
-            # Excessive noise
+            # excessive noise
             mean = (min_val + max_val) / 2
             std_dev = (max_val - min_val) / 2  # much higher
             values = np.random.normal(mean, std_dev, num_samples)

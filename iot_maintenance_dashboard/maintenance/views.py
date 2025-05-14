@@ -197,7 +197,7 @@ def predict(request):
                 sensor=sensor,
                 timestamp=timezone.now(),
                 message=f"PREDICTION: {random.choice(prediction_messages)}",
-                priority='medium',  # Most predictions are medium priority
+                priority='medium',  
                 is_resolved=False
             )
             prediction_count += 1
